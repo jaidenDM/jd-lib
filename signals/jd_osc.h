@@ -25,8 +25,13 @@ public:
     {
         for (int i = 0; i < numSamples; i++) {
 //            F offsetPhase = m_phase + m_phaseOffset;
-            if ((m_phase + m_phaseIncrement) >= 1.) m_phase = 0.;
-            output[i] = impl().processedSample(m_phase) * m_amplitude;
+            F phase = m_phase;
+            if ((m_phase + m_phaseIncrement) >= 1.)
+            {
+                phase = 1.;
+                m_phase = 0.;
+            }
+            output[i] = impl().processedSample(phase) * m_amplitude;
             m_phase += m_phaseIncrement;
         }
     }
@@ -76,6 +81,16 @@ class TriOsc : public Osc<F, TriOsc<F>>
 public:
     F processedSample (const F phase) {
         return ((phase < 0.5) ? (2. * phase) : (1. - 2. * ( phase - 0.5))) * 2. - 1.;
+    }
+};
+
+
+template <typename F>
+class Impulse : public Osc<F, Impulse<F>>
+{
+public:
+    F processedSample (const F phase) {
+        return (phase > 0.99999) ? 1. : 0.;
     }
 };
 
