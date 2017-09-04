@@ -15,10 +15,10 @@
 #include <typeinfo>
 #include <vector>
 #include <map>
-#include <list>
+//#include <list>
 #include <utility>
-#include <array>
-#include <set>
+//#include <array>
+//#include <set>
 
 template<class C>
 C normalised_list (C& list)

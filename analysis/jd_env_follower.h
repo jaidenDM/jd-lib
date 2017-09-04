@@ -32,11 +32,18 @@ public:
     {
         for (int i = 0; i < numSamples; i++)
         {
-            m_envelopeOutput[i] = processSample(input[i]);
+            m_envelopeOutput[i] = processedSample(input[i]);
+        }
+    }
+    void processBlock(const F* input, F* output, int numSamples)
+    {
+        for (int i = 0; i < numSamples; i++)
+        {
+            output[i] = processedSample(input[i]);
         }
     }
     
-    F processSample(const F input) {
+    F processedSample(const F input) {
         
         const F envInput = impl().calculate(input);
         
@@ -47,7 +54,6 @@ public:
         
         return m_envelope;
     }
-
     
     //INPUTS
     void setAttackTimeMS(F attackTimeMS) {
@@ -60,7 +66,7 @@ public:
     }
     
     //OUTPUTS
-    const std::vector<float>& envelope() { return m_envelopeOutput; }
+    float envelope() { return m_envelope; }
     const float* envelopeData() { return m_envelopeOutput.data(); }
 protected:
     F m_sampleRate;
