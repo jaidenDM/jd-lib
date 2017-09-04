@@ -20,6 +20,7 @@ class Gate {
 public:
     
     friend class Gate<F, Derived, Detector>;
+    friend Derived;
     
     Derived& impl() { return *static_cast<Derived*>(this); }
     //INITIALISATION
@@ -29,7 +30,10 @@ public:
         const int numThresholds = Derived::NUM_THRESHOLDS;
         thresholds.resize(numThresholds);
         isAbove.resize(numThresholds);
-        std::fill(isAbove.begin(), isAbove.end(), false);
+//        shouldTriggerOnToAbove.resize(numThresholds);
+//        shouldTriggerOnToBelow.resize(numThresholds);
+//        std::fill(isAbove.begin(), isAbove.end(), false);
+        for (int i = 0; i < numThresholds; i++) isAbove[i] = false;
     }
     
     //PROCESSING
@@ -50,10 +54,19 @@ public:
             impl().checkThreshold(detectorSample, i);
         }
     }
+    
+    F processSample(F input)
+    {
+        const F inputSample = input;
+        const F detectorSample = m_detector.calculate(inputSample);
+        impl().checkThreshold(detectorSample, 0);
+        return impl().processedSample(inputSample, detectorSample);
+    }
+
     //PARAMETER MODIFICATION
     void setRMSWindowSizeMS(F windowSizeMS)
     {
-        detector().setBufferSizeMS(windowSizeMS);
+        m_detector.setBufferSizeMS(windowSizeMS);
     }
     
     template<typename T>
@@ -75,8 +88,8 @@ public:
     std::vector<F> thresholds;
     int m_thresholds_i = 0;
     std::vector<bool> isAbove;
-    std::vector<bool> shouldTriggerOnToAbove;
-    std::vector<bool> shouldTriggerOnToBelow;
+//    std::vector<char> shouldTriggerOnToAbove;
+//    std::vector<char> shouldTriggerOnToBelow;
     
     Detector m_detector;
 };
@@ -91,6 +104,8 @@ public:
     };
 protected:
     void checkThreshold(float detectorSignal, int sampleIndex) {
+        std::cout << "h" << std::endl;
+        
         if (detectorSignal > super::thresholds[THRESH])
         {
             if (!super::isAbove[THRESH]) {
@@ -122,32 +137,7 @@ public:
     
     F processedSample (F inputSample, F detectorSample)
     {
-        return 0;
-    }
-    
-protected:
-    void checkThreshold(float detectorSignal, int sampleIndex) {
-        for (int i = 0; i < NUM_THRESHOLDS; ++i)
-        {
-            if (detectorSignal > super::thresholds[i])
-            {
-                if (!super::isAbove[i]) {
-                    if (i == LOWER)
-                        onExitFromBelow(sampleIndex);
-                    if (i == UPPER)
-                        onEntryToAbove(sampleIndex);
-                }
-                super::isAbove[i] = true;
-            } else {
-                if (super::isAbove[i]) {
-                    if (i == LOWER)
-                        onEntryToBelow(sampleIndex);
-                    if (i == UPPER)
-                        onExitFromAbove(sampleIndex);
-                }
-                super::isAbove[i] = false;
-            }
-        }
+        return detectorSample;
     }
     
     void setLowerThreshold(F threshold){
@@ -157,10 +147,54 @@ protected:
         super::thresholds[UPPER] = threshold;
     };
     
-    virtual void onExitFromBelow(int sampleIndex) {}
-    virtual void onEntryToBelow(int sampleIndex) {}
-    virtual void onExitFromAbove(int sampleIndex) {}
-    virtual void onEntryToAbove(int sampleIndex) {}
+    bool isWithinRange ()
+    {
+        return (super::isAbove[LOWER] && !super::isAbove[UPPER]);
+    }
+    
+protected:
+    void checkThreshold(float detectorSignal, int sampleIndex) {
+
+        for (int i = 0; i < NUM_THRESHOLDS; i++)
+        {
+            if (detectorSignal > super::thresholds[i])
+            {
+                if (!super::isAbove[i]) {
+                    if (i == LOWER) {
+                        onExitFromBelow(i);
+                    }
+                    if (i == UPPER) {
+                        onEntryToAbove(i);
+                    }
+                }
+                super::isAbove[i] = true;
+            } else
+            {
+                if (super::isAbove[i]) {
+                    if (i == LOWER) {
+                        onEntryToBelow(i);
+                    }
+                    if (i == UPPER) {
+                        onExitFromAbove(i);
+                    }
+                }
+                super::isAbove[i] = false;
+            }
+        }
+    }
+    
+    virtual void onExitFromBelow(int sampleIndex) {
+//        std::cout << "onExitFromBelow" << std::endl;
+    }
+    virtual void onEntryToBelow(int sampleIndex) {
+//        std::cout << "onEntryToBelow" << std::endl;
+    }
+    virtual void onExitFromAbove(int sampleIndex) {
+//        std::cout << "onExitFromAbove" << std::endl;
+    }
+    virtual void onEntryToAbove(int sampleIndex) {
+//        std::cout << "onEntryToAbove" << std::endl;
+    }
     
 private:
     using super = Gate<F, GateDouble<F, Detector>, Detector>;

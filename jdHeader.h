@@ -17,5 +17,7 @@ namespace jd {
     #include "dynamics/jd_dynamics.h"
     #include "signals/jd_signals.h"
     #include "envelopes/jd_envelope.h"
+    #include "jd_t/arg_info.h"
+    #include "jd_t/collection_ops.h"
 };
 #endif /* jdHeader_h */

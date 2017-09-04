@@ -47,6 +47,7 @@ public:
         
         return m_envelope;
     }
+
     
     //INPUTS
     void setAttackTimeMS(F attackTimeMS) {
