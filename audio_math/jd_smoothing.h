@@ -3,7 +3,7 @@
 
 #include <math.h>
 #include <atomic>
-#include "jd_audio_math.h"
+#include "../audio_math/jd_audio_math.h"
 
 template <typename FloatType>
 struct OneZero {
@@ -22,18 +22,32 @@ struct OneZero {
 template <typename FloatType>
 class SmoothedValue {
     
+    enum SmoothingMode {
+        Stepwise,
+        Recursive
+    };
+    
     FloatType m_value{0};
-    std::atomic<FloatType> m_target {0};
+    std::atomic<FloatType> m_newTarget {0};
+    FloatType m_target;
     FloatType m_starting {0};
     int m_remaining;
     int m_amount;
     FloatType m_increment;
-    
-    FloatType m_curve;
+    FloatType m_curve {1};
+    SmoothingMode mode { Stepwise  };
     
     double m_sampleRate {0.};
     
 public:
+    
+    SmoothedValue() = default;
+    SmoothedValue(SmoothedValue& ) = delete;
+    SmoothedValue  (SmoothedValue&& other) {
+        setSampleRate(other.m_sampleRate);
+        setDurationS(0.01, other.m_curve);
+        setValue(other.m_target);
+    }
     
     void setSampleRate(double sampleRate) {
         m_sampleRate = sampleRate;
@@ -45,14 +59,13 @@ public:
         m_amount = (int)floor(duration * m_sampleRate);
     }
     
-    void setValue(FloatType target)
+    void setTarget(FloatType target)
     {
-        m_target.store(target);
-        
+        m_newTarget.store(target);
     }
     
     void updateTarget() {
-        auto newTarget = m_target.load();
+        auto newTarget = m_newTarget.load();
         if (newTarget != m_target) {
             m_starting = m_value;
             m_target = newTarget;
@@ -64,19 +77,30 @@ public:
         }
     }
     
+    FloatType currentValue()
+    {
+        return m_value;
+    }
+    /* call once per audio rate cycle*/
     FloatType nextValue()
     {
-        updateTarget();
         if (m_remaining-- <= 0)
             return m_target;
-        m_value += m_increment;
+        
+        FloatType increment;
+        switch (mode) {
+            case Stepwise:
+                increment = m_increment;
+                break;
+            case Recursive:
+                auto distance = m_target - m_value;
+                increment = distance / 1.05;
+                break;
+        };
+        
+        m_value += increment;
 
-        auto norm = linlin(m_value,
-                               m_starting,
-                               m_target,
-                               FloatType {0},
-                               FloatType {1});
-        return m_value * ::powf(norm, m_curve);
+        return m_value;
     }
     
 };

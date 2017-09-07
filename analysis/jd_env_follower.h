@@ -1,3 +1,4 @@
+
 //
 //  env_follower_tmp.h
 //  template_meta
@@ -133,7 +134,8 @@ public:
     }
     void setBufferSizeSamples (size_t lengthSamples)
     {
-        m_windowSize = std::max(std::min(lengthSamples, m_maxCircularBufferSize), (size_t)1);
+        m_windowSize = std::max(std::min(lengthSamples, m_maxCircularBufferSize), (size_t)8);
+        
     }
 protected:
     //MAINTENANCE
@@ -149,7 +151,7 @@ private:
     F m_squaresSum {0.};
     std::vector<F> m_circularBuffer;
     size_t m_circularBufferIndex { 0 };
-    size_t m_windowSize;
+    size_t m_windowSize {8};
     size_t m_maxCircularBufferSize;/* do later*/
     
     using super = EnvelopeFollower<F, RMSEnvelopeFollower<F>>;

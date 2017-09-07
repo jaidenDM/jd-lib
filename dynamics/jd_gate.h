@@ -130,7 +130,7 @@ public:
         super::thresholds[UPPER] = threshold;
     }
     
-    bool isWithinRange ()
+    bool isWithinRange () const
     {
         return (super::isAbove[LOWER] && !super::isAbove[UPPER]);
     }
