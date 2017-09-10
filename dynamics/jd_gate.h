@@ -35,19 +35,29 @@ public:
     }
     
     int checkThreshold(float detectorSignal) {
-        
+        using namespace std;
         int code = -1;
         
         for (int i = 0; i < Derived::NUM_THRESHOLDS; i++)
         {
             if (detectorSignal > thresholds[i])
             {
-                if (!isAbove[i])
+                if (!isAbove[i]) {
                     code = i;
+//                    if (i == 0)
+//                        cout << "ENTRY_FROM_BELOW" << endl;
+//                    if (i == 1)
+//                        cout << "EXIT FROM ABOVE" << endl;
+                }
                 isAbove[i] = true;
             } else {
-                if (isAbove[i])
+                if (isAbove[i]) {
                     code = i + 1;
+//                    if (i == 0)
+//                        cout << "ENTRY_TO_BELOW" << endl;
+//                    if (i == 1)
+//                        cout << "EXIT TO ABOVE" << endl;
+                }
                 isAbove[i] = false;
             }
         }
@@ -112,12 +122,18 @@ template<typename F>
 class GateDouble : public Gate<F, GateDouble<F>>
 {
 public:
-    virtual ~GateDouble() = default;
     
     enum Thresholds {
         LOWER,
         UPPER,
         NUM_THRESHOLDS
+    };
+    
+    enum GateCrossingCode {
+        entryFromBelow,
+        exitToBelow,
+        entryToAbove,
+        exitFromAbove
     };
 
     void setLowerThreshold(F threshold)
@@ -139,6 +155,7 @@ public:
     {
         return (super::isAbove[lower] && !super::isAbove[upper]);
     }
+    
     
 protected:
 //    int checkThreshold(float detectorSignal) {

@@ -26,7 +26,8 @@ public:
                        FloatType aTarget,
                        FloatType aTimeSeconds,
                        FloatType aCurve,
-                       bool aIsSustainType  )
+                       bool aIsSustainType,
+                       bool shouldClearRelease = false)
     {
         starting = aStarting;
         target = aTarget;
@@ -36,7 +37,8 @@ public:
         curve = aCurve;
         current = 0.;
         completionTriggered = false;
-        releaseTriggered = false;
+        if (shouldClearRelease)
+            releaseTriggered = false;
         isSustainType = aIsSustainType;
     }
     
@@ -70,15 +72,18 @@ public:
     
     void release() {  releaseTriggered = true; }
     
-    void endAction ()
-    {
-        if (completionTriggered)
-        {
-            completionTriggered = false;
-            releaseTriggered = false;
-        }
-    }
+    bool isWaitingToRelease() { return releaseTriggered; }
+    bool cancelRelease() { releaseTriggered = false; }
     
+//    void endAction ()
+//    {
+//        if (completionTriggered)
+//        {
+//            completionTriggered = false;
+//            releaseTriggered = false;
+//        }
+//    }
+//    
     void clear()
     {
         amount = starting = current = target = 0.;
@@ -103,7 +108,7 @@ public:
     FloatType mIncrementRate {44100.};
 };
     
-
+//=========================================================================
 template <typename FloatType>
 class Envelope {
 public:
@@ -119,6 +124,8 @@ public:
         setIncrementRate(sampleRate);
         triggers.resize(blockSize);
         releases.resize(blockSize);
+        smoothedVal.setSampleRate(sampleRate);
+        
     }
     
     void make(const std::vector<FloatType> &&aLevels,
@@ -157,7 +164,7 @@ public:
              {aCurve, aCurve, aCurve},
              aMul,
              aAdd  );
-        setSustainNodes({1});
+        setSustainNodes({2});
     }
     void setAttackTime (FloatType newAttackTime)
     {
@@ -170,6 +177,10 @@ public:
     void setReleaseTime (FloatType newReleaseTime)
     {
         times[2] = newReleaseTime;
+    }
+    void setSustainLevel (FloatType newReleaseTime)
+    {
+        levels[2] = newReleaseTime;
     }
     
     void trigger () {
@@ -357,16 +368,18 @@ public:
     }
     void prepareAction()
     {
-        if (levels.size() > 0){
+        if (levels.size() > 0) {
             FloatType target = levels[index];
             FloatType time = (index == 0) ? 0. : times[index - 1];
             FloatType curve = (index == 0) ? 1. : curves[index - 1];
             checkIfActionIsSustainType();
+            
             envReader.prepareAction(envReader.value(),
                                     target,
                                     time,
                                     curve,
-                                    actionIsSustainType());
+                                    actionIsSustainType(),
+                                    isFirstPoint());
         }
     }
     

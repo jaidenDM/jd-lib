@@ -28,7 +28,8 @@ class SmoothedValue {
     };
     
     FloatType m_value{0};
-    std::atomic<FloatType> m_newTarget {0};
+//    std::atomic<FloatType> m_newTarget {0};
+    FloatType m_newTarget {0};
     FloatType m_target;
     FloatType m_starting {0};
     int m_remaining;
@@ -42,12 +43,12 @@ class SmoothedValue {
 public:
     
     SmoothedValue() = default;
-    SmoothedValue(SmoothedValue& ) = delete;
-    SmoothedValue  (SmoothedValue&& other) {
-        setSampleRate(other.m_sampleRate);
-        setDurationS(0.01, other.m_curve);
-        setValue(other.m_target);
-    }
+//    SmoothedValue(SmoothedValue& ) = default;
+//    SmoothedValue  (SmoothedValue&& other) {
+//        setSampleRate(other.m_sampleRate);
+//        setDurationS(0.01, other.m_curve);
+//        setValue(other.m_target);
+//    }
     
     void setSampleRate(double sampleRate) {
         m_sampleRate = sampleRate;
@@ -61,11 +62,12 @@ public:
     
     void setTarget(FloatType target)
     {
-        m_newTarget.store(target);
+//        m_newTarget.store(target);
+        m_newTarget = target;
     }
     
     void updateTarget() {
-        auto newTarget = m_newTarget.load();
+        auto newTarget = m_newTarget;
         if (newTarget != m_target) {
             m_starting = m_value;
             m_target = newTarget;

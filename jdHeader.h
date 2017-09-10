@@ -12,12 +12,6 @@
 #include <tuple>
 #include <array>
 #include <cmath>
-#include <experimental/optional>
-
-namespace std {
-template<class _Tp>
-using optional = std::experimental::optional<_Tp>;
-};
 
 namespace jd {
     
